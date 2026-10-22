@@ -1,0 +1,15 @@
+case_id,scenario,expected_outcome
+R001,Exact ticket number and amount match,Auto-match only if uniqueness and other configured checks pass
+R002,Ticket exists but customer payment missing,Open exception: missing customer payment
+R003,Payment exists but no ticket candidate,Open exception: unmatched payment
+R004,Same ticket number appears twice with same source ID,Idempotent replay; do not create duplicate
+R005,Same ticket number appears with different source ID and different amount,Flag duplicate/conflict for human review
+R006,Customer pays part of ticket amount,Keep remaining receivable outstanding
+R007,One payment allocated to two tickets,Allocate amounts separately; total allocations must follow policy and not exceed payment
+R008,Airline cost differs from expected amount,Open amount mismatch; never silently change cost
+R009,Ticket cancelled after payment,Track cancellation/refund state and approved reversal workflow
+R010,Portal session expires during operation,Mark outcome uncertain/needs_review; verify portal state before retrying consequential action
+R011,PNR matches but passenger/amount differs,Do not auto-match solely on PNR
+R012,Negative customer balance appears,Flag for review; do not auto-correct
+R013,Same reconciliation case resolved by two users concurrently,One succeeds; other receives conflict and sees latest state
+R014,Report date range crosses local midnight,Use documented agency timezone and explicit date-field definition

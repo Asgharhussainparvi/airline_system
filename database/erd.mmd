@@ -1,0 +1,125 @@
+erDiagram
+    USERS ||--o{ AUDIT_EVENTS : performs
+    USERS }o--o{ ROLES : assigned
+    CUSTOMERS ||--o{ BOOKINGS : owns
+    AIRLINES ||--o{ BOOKINGS : associated
+    BOOKINGS ||--o{ PASSENGERS : contains
+    BOOKINGS ||--o{ PNRS : references
+    BOOKINGS ||--o{ TICKETS : produces
+    PASSENGERS ||--o{ TICKETS : travels
+    TICKETS ||--o{ TICKET_PRICE_COMPONENTS : priced_by
+    CUSTOMERS ||--o{ PAYMENTS : makes
+    PAYMENTS ||--o{ PAYMENT_ALLOCATIONS : allocated_by
+    TICKETS ||--o{ PAYMENT_ALLOCATIONS : receives
+    FINANCIAL_ACCOUNTS ||--o{ FINANCIAL_TRANSACTIONS : records
+    INTEGRATION_RUNS ||--o{ STAGED_RECORDS : stages
+    RECONCILIATION_CASES }o--o{ TICKETS : references
+    RECONCILIATION_CASES }o--o{ PAYMENTS : references
+
+    USERS {
+      uuid id PK
+      string username UK
+      string password_hash
+      string status
+    }
+    CUSTOMERS {
+      uuid id PK
+      string display_name
+      string status
+    }
+    AIRLINES {
+      uuid id PK
+      string code UK
+      string name
+    }
+    BOOKINGS {
+      uuid id PK
+      uuid customer_id FK
+      uuid airline_id FK
+      string source_reference
+      string status
+      datetime booked_at
+    }
+    PASSENGERS {
+      uuid id PK
+      uuid booking_id FK
+      string passenger_name
+    }
+    PNRS {
+      uuid id PK
+      uuid booking_id FK
+      string pnr_code
+      string source_system
+    }
+    TICKETS {
+      uuid id PK
+      uuid booking_id FK
+      uuid passenger_id FK
+      string ticket_number
+      string status
+      datetime issued_at
+    }
+    TICKET_PRICE_COMPONENTS {
+      uuid id PK
+      uuid ticket_id FK
+      string component_type
+      decimal amount
+      string currency
+    }
+    PAYMENTS {
+      uuid id PK
+      uuid customer_id FK
+      decimal amount
+      string currency
+      string reference
+    }
+    PAYMENT_ALLOCATIONS {
+      uuid id PK
+      uuid payment_id FK
+      uuid ticket_id FK
+      decimal allocated_amount
+    }
+    FINANCIAL_ACCOUNTS {
+      uuid id PK
+      string account_type
+      string name
+      string currency
+    }
+    FINANCIAL_TRANSACTIONS {
+      uuid id PK
+      uuid account_id FK
+      decimal amount
+      string direction
+      string source_type
+      uuid source_id
+    }
+    INTEGRATION_RUNS {
+      uuid id PK
+      string connector
+      string status
+      datetime started_at
+    }
+    STAGED_RECORDS {
+      uuid id PK
+      uuid integration_run_id FK
+      string source_fingerprint
+      string status
+    }
+    AUDIT_EVENTS {
+      uuid id PK
+      uuid actor_id FK
+      string action
+      string entity_type
+      uuid entity_id
+      datetime created_at
+    }
+    RECONCILIATION_CASES {
+      uuid id PK
+      string case_type
+      string status
+      decimal difference_amount
+    }
+    ROLES {
+      uuid id PK
+      string name UK
+    }

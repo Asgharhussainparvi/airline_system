@@ -1,0 +1,21 @@
+﻿ID,Priority,Epic,Task,Acceptance criteria,Estimate_days,Dependency,Status
+AUTO-01,P0,Discovery,Audit current automation and repository,"Document current connector flow, routes, models, tests, known failures; no rewrite of working modules",1,None,Todo
+AUTO-02,P0,Integration,Confirm one portal's permitted integration path,Written confirmation/evidence of API or permitted browser automation; manual fallback documented,1,AUTO-01,Todo
+AUTO-03,P0,Architecture,Define canonical source field mapping,"PNR, ticket number, passenger, fare, taxes, EMD, charges, customer, dates and source IDs mapped; unknown fields flagged",1,AUTO-01,Todo
+AUTO-04,P0,Integration,Create connector interface and sync run state,Connector runs asynchronously and reports queued/running/succeeded/partial/failed/needs_review,1.5,AUTO-01,Todo
+AUTO-05,P0,Ingestion,Add staging and schema validation,Raw/normalized records stored in staging; invalid records are rejected with field-level reasons,2,"AUTO-03,AUTO-04",Todo
+AUTO-06,P0,Reliability,Implement idempotent ingestion,Replaying identical source data creates no duplicate ticket or financial posting,2,AUTO-05,Todo
+AUTO-07,P0,Integration,Harden one portal connector,No CAPTCHA/MFA bypass; bounded retries; safe failure on portal layout drift; source references captured,3,"AUTO-02,AUTO-04,AUTO-05",Todo
+AUTO-08,P0,UI,Show sync status in React,"User sees run ID, status, counts, errors and retry eligibility",1.5,AUTO-04,Todo
+FIN-01,P0,Finance,Validate accounting formulas with business owner,"Profit, receivable, airline payable, TOPUP and EMD semantics signed off with sample cases",1,None,Todo
+REC-01,P0,Reconciliation,Implement deterministic exact matching,Exact identifiers/amount/date rules match; ambiguous records go to review queue,2,"AUTO-06,FIN-01",Todo
+REC-02,P0,Reconciliation,Add review and resolution audit,Resolution requires permission and reason; original mismatch remains traceable,1.5,REC-01,Todo
+QA-01,P0,Testing,Add connector fixture and failure tests,"Network error, invalid credential, malformed field, duplicate replay and layout drift covered",2,AUTO-07,Todo
+QA-02,P0,Testing,Add end-to-end vertical-slice test,Ticket -> payment/cost -> reconciliation -> report totals agree on test dataset,2,"REC-02,FIN-01",Todo
+SEC-01,P0,Security,Verify role checks and secrets handling,"Unauthorized users blocked server-side; no credentials in source, logs, screenshots or responses",1.5,AUTO-01,Todo
+RPT-01,P1,Reporting,Cross-check dashboard metric definitions,"Same period, timezone and filters return same totals in API and dashboard",1.5,FIN-01,Todo
+AI-01,P1,AI,Add constrained assistant metric catalogue,"Approved question types only; answers show metric, filters and as-of timestamp; no writes",2.5,RPT-01,Todo
+AI-02,P1,AI,Build AI question benchmark,At least 50 questions with expected metric/filter/result; unauthorized requests tested,1.5,AI-01,Todo
+ANOM-01,P1,Analytics,Add rule-based anomaly flags,"Duplicate ticket, missing payment, mismatched amount and negative balance flags include reason codes",2,REC-01,Todo
+REL-01,P0,Release,Backup restore and release rehearsal,Restore tested; critical tests pass; limitations and demo path documented,1.5,"QA-02,SEC-01",Todo
+DOC-01,P0,Documentation,"Complete architecture, ERD, API and test report",Docs match implemented behavior and known limitations; diagrams reviewed by supervisor,2,"AUTO-01,QA-02",Todo

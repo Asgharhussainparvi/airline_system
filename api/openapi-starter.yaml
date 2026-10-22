@@ -1,0 +1,189 @@
+openapi: 3.1.0
+info:
+  title: Airline Ticketing FYP API
+  version: 1.0.0
+  description: Starter contract; align with the actual FastAPI models before implementation.
+servers:
+  - url: /api/v1
+paths:
+  /integration-runs:
+    post:
+      summary: Start an authorized connector sync
+      operationId: startIntegrationRun
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [connector]
+              properties:
+                connector: { type: string, enum: [airsial, airblue, crane, spreadsheet_import] }
+                fromDate: { type: string, format: date }
+                toDate: { type: string, format: date }
+      responses:
+        '202':
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+        '403': { description: Insufficient permission }
+        '409': { description: Conflicting active run }
+  /integration-runs/{runId}:
+    get:
+      summary: Get connector run status
+      operationId: getIntegrationRun
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: runId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Run status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationRun'
+        '404': { description: Not found }
+  /tickets:
+    get:
+      summary: Search tickets
+      operationId: listTickets
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: pnr
+          schema: { type: string }
+        - in: query
+          name: ticketNumber
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Paginated ticket results
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, page, pageSize, total]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Ticket' } }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+                  total: { type: integer }
+  /reconciliation/runs:
+    post:
+      summary: Start reconciliation
+      operationId: startReconciliation
+      security: [{ bearerAuth: [] }]
+      responses:
+        '202':
+          description: Reconciliation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+  /reconciliation/cases:
+    get:
+      summary: List reconciliation exceptions
+      operationId: listReconciliationCases
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Cases returned }
+  /reconciliation/cases/{caseId}/resolve:
+    post:
+      summary: Resolve a reconciliation case
+      operationId: resolveReconciliationCase
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution, reason]
+              properties:
+                resolution: { type: string, enum: [matched, accepted_difference, rejected_match, needs_follow_up] }
+                reason: { type: string, minLength: 5, maxLength: 1000 }
+      responses:
+        '200': { description: Case resolved and audited }
+        '403': { description: Insufficient permission }
+        '409': { description: Case state conflict }
+  /assistant/query:
+    post:
+      summary: Ask a read-only business question
+      operationId: askBusinessAssistant
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question: { type: string, minLength: 3, maxLength: 1000 }
+      responses:
+        '200':
+          description: Grounded answer from approved metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [answer, metric, filters, asOf]
+                properties:
+                  answer: { type: string }
+                  metric: { type: string }
+                  filters: { type: object }
+                  asOf: { type: string, format: date-time }
+                  warnings: { type: array, items: { type: string } }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    JobAccepted:
+      type: object
+      required: [runId, status]
+      properties:
+        runId: { type: string, format: uuid }
+        status: { type: string, enum: [queued] }
+    IntegrationRun:
+      type: object
+      required: [id, connector, status, recordsRead, recordsCreated, recordsRejected]
+      properties:
+        id: { type: string, format: uuid }
+        connector: { type: string }
+        status: { type: string, enum: [queued, running, succeeded, partial, failed, needs_review] }
+        recordsRead: { type: integer }
+        recordsCreated: { type: integer }
+        recordsUpdated: { type: integer }
+        recordsRejected: { type: integer }
+        errorSummary: { type: string, nullable: true }
+    Ticket:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        pnr: { type: string, nullable: true }
+        ticketNumber: { type: string, nullable: true }
+        status: { type: string }
+        issuedAt: { type: string, format: date-time, nullable: true }
