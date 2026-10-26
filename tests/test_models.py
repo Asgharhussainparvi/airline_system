@@ -1,52 +1,40 @@
 import uuid
 
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
-from app.db import Base, get_database_url
+from app.db import engine
 from app.models import Airline, Customer
 
 
 def test_database_tables_exist() -> None:
-    engine = create_engine(get_database_url())
-
-    try:
-        inspector = inspect(engine)
+    with engine.connect() as connection:
+        inspector = inspect(connection)
         tables = set(inspector.get_table_names(schema="public"))
 
-        assert "customers" in tables
-        assert "airlines" in tables
-    finally:
-        engine.dispose()
+    assert "customers" in tables
+    assert "airlines" in tables
 
 
-def test_customer_and_airline_can_be_inserted() -> None:
-    engine = create_engine(get_database_url())
-
+def test_customer_and_airline_can_be_inserted(
+    db_session: Session,
+) -> None:
     customer_id = uuid.uuid4()
     airline_id = uuid.uuid4()
 
-    try:
-        with Session(engine) as session:
-            customer = Customer(
-                id=customer_id,
-                display_name="Test Customer",
-                email=f"{customer_id}@example.test",
-            )
-            airline = Airline(
-                id=airline_id,
-                code=f"T{airline_id.hex[:2].upper()}",
-                name="Test Airline",
-            )
+    customer = Customer(
+        id=customer_id,
+        display_name="Test Customer",
+        email=f"{customer_id}@example.test",
+    )
+    airline = Airline(
+        id=airline_id,
+        code=f"T{airline_id.hex[:2].upper()}",
+        name="Test Airline",
+    )
 
-            session.add_all([customer, airline])
-            session.commit()
+    db_session.add_all([customer, airline])
+    db_session.flush()
 
-            assert session.get(Customer, customer_id) is not None
-            assert session.get(Airline, airline_id) is not None
-
-            session.delete(customer)
-            session.delete(airline)
-            session.commit()
-    finally:
-        engine.dispose()
+    assert db_session.get(Customer, customer_id) is not None
+    assert db_session.get(Airline, airline_id) is not None

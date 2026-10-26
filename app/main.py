@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.routers.airlines import router as airlines_router
 from app.routers.customers import router as customers_router
 
 app = FastAPI(
@@ -16,3 +17,4 @@ def health_check() -> dict[str, str]:
 
 
 app.include_router(customers_router)
+app.include_router(airlines_router)

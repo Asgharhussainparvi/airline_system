@@ -102,3 +102,4 @@ def test_created_customer_appears_in_customer_list(
     assert len(matching_customers) == 1
     assert matching_customers[0]["display_name"] == payload["display_name"]
 
+
